@@ -57,23 +57,23 @@ visited(1)=1;
 // nearest neighbor on visibility
 while unvisited > 0 do
     for id= 1:vehicle_count do
-        pos_next=0;
+        pos_next= 0;
         [foo,pos_next]= max(mu(pos_current(id),:));
         // back to depot if not carrying enough payload
         if payload(id)<demand(pos_next) & pos_next>1 then
            // mprintf('refuel id=%d step=%d current=%d next=%d\n',id,step(id),(id),pos_next);
             step(id)= step(id)+1;
-            route_nn(id,step(id))=1;
+            route_nn(id,step(id))= 1;
             payload(id)= payload_max;
         end
         if pos_current(id)~=pos_next & pos_next>1 then
             step(id)= step(id)+1;
-            visited(pos_next)=1;
+            visited(pos_next)= 1;
             unvisited= unvisited-1;
             payload(id)= payload(id)-demand(pos_next);
           //  mprintf('id=%d step=%d current=%d next=%d\n',id,step(id),pos_current(id),pos_next);
-            route_nn(id,step(id))=pos_next;
-            pos_current(id)=pos_next;
+            route_nn(id,step(id))= pos_next;
+            pos_current(id)= pos_next;
             mu(:,pos_next)= 0;
         end
     end
@@ -82,15 +82,15 @@ end
 // back home
 for id= 1:vehicle_count do
     if route_nn(id,step(id))~=1 then
-        step(id)=step(id)+1;
+        step(id)= step(id)+1;
        // mprintf('balik id=%d step=%d current=%d next=%d\n',id,step(id),(id),pos_next);
-        route_nn(id,step(id))=1;
+        route_nn(id,step(id))= 1;
     end
 end
 
 // cost and total distance traveled for each vehicle
 cost(1:vehicle_count)= 0;
-distance_total(1:vehicle_count)=0;
+distance_total(1:vehicle_count)= 0;
 for id= 1:vehicle_count do
     for i= 1:step(id)-1 do
         distance_total(id)= distance_total(id)+distance(route_nn(id,i),route_nn(id,i+1));
@@ -100,18 +100,15 @@ for id= 1:vehicle_count do
 end
 mprintf('nn total jarak %f\n',sum(distance_total));
 
+l_nn = sum(distance_total);
+
 // ACO goes here henceforth
 c_alpha= 0.3;
 c_beta= 2; 
 c_rho= 0.1;
 c_q0= 0.5;
-l_nn= 0;
-l_gb= 0;
-
-for id= 1:vehicle_count do
-    l_nn = l_nn + distance_total(id);
-end
-
+l_gb= %inf;
+ant_max= 100;
 tau=0;
 
 // aco inits (pheromone, mu)
@@ -138,13 +135,13 @@ for i= 1:26 do
     end
 end
 
-ant_max= 100;
 for ant= 1:ant_max do
     // inits
     unvisited= 25;
     visited(1:26)= 0;
     visited(1)= 1;
     trail(1:26,1:26)= 0
+    l_temp= 0;
     payload= payload_max;
     
     // random initial step
@@ -189,9 +186,18 @@ for ant= 1:ant_max do
             pos_next= i;
         end
         
+        if payload<demand(pos_next) then
+            tau(pos_current,1)= (1-c_rho)*tau(pos_current,1)+c_rho*tau_0;
+            trail(pos_current,1)= 1;
+            l_temp= l_temp+distance(pos_current,1);
+            payload= payload_max;
+            pos_current= 1;
+        end
+        
         tau(pos_current,pos_next)= (1-c_rho)*tau(pos_current,pos_next)+c_rho*tau_0;
         trail(pos_current,pos_next)= 1;
-        l_gb= l_gb+distance(pos_current,pos_next);
+        payload= payload-demand(pos_next);
+        l_temp= l_temp+distance(pos_current,pos_next);
         pos_current= pos_next;
         if visited(pos_next)==0 then
             visited(pos_next)= 1;
@@ -199,10 +205,14 @@ for ant= 1:ant_max do
         end
     end
     
-    // go back home
+    // go back home once all destinations visited
     tau(pos_current,1)= (1-c_rho)*tau(pos_current,1)+c_rho*tau_0;
     trail(pos_current,1)= 1;
     pos_current= 1;
+    
+    if l_temp<l_gb then
+        l_gb= l_temp;
+    end
        
     // global pheromone update
     for i= 1:26 do
@@ -226,25 +236,27 @@ visited(1)=1;
 
 mprintf("--0\n");
 // nearest neighbor on pheromone
+tau(:,1)= 0;
 while unvisited > 0 do
     for id= 1:vehicle_count do
         pos_next=0;
         [foo,pos_next]= max(tau(pos_current(id),:));
+        mprintf('endless8 id=%d step=%d current=%d next=%d payload=%d\n',id,step(id),pos_current(id),pos_next,payload(id));
         // back to depot if not carrying enough payload
         if payload(id)<demand(pos_next) & pos_next>1 then
-           // mprintf('refuel id=%d step=%d current=%d next=%d\n',id,step(id),(id),pos_next);
+           // mprintf('refuel id=%d step=%d current=%d next=%d\n',id,step(id),pos_current(id),pos_next);
             step(id)= step(id)+1;
             route_aco(id,step(id))=1;
             payload(id)= payload_max;
         end
         if pos_current(id)~=pos_next & pos_next>1 then
             step(id)= step(id)+1;
-            visited(pos_next)=1;
+            visited(pos_next)= 1;
             unvisited= unvisited-1;
             payload(id)= payload(id)-demand(pos_next);
           //  mprintf('id=%d step=%d current=%d next=%d\n',id,step(id),pos_current(id),pos_next);
-            route_aco(id,step(id))=pos_next;
-            pos_current(id)=pos_next;
+            route_aco(id,step(id))= pos_next;
+            pos_current(id)= pos_next;
             tau(:,pos_next)= 0;
         end
     end
@@ -254,9 +266,9 @@ mprintf("--a\n");
 // back home
 for id= 1:vehicle_count do
     if route_aco(id,step(id))~=1 then
-        step(id)=step(id)+1;
+        step(id)= step(id)+1;
        // mprintf('balik id=%d step=%d current=%d next=%d\n',id,step(id),(id),pos_next);
-        route_aco(id,step(id))=1;
+        route_aco(id,step(id))= 1;
     end
 end
 
