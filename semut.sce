@@ -241,7 +241,7 @@ while unvisited > 0 do
     for id= 1:vehicle_count do
         pos_next=0;
         [foo,pos_next]= max(tau(pos_current(id),:));
-        mprintf('endless8 id=%d step=%d current=%d next=%d payload=%d\n',id,step(id),pos_current(id),pos_next,payload(id));
+        /// mprintf('endless8 id=%d step=%d current=%d next=%d payload=%d\n',id,step(id),pos_current(id),pos_next,payload(id));
         // back to depot if not carrying enough payload
         if payload(id)<demand(pos_next) & pos_next>1 then
            // mprintf('refuel id=%d step=%d current=%d next=%d\n',id,step(id),pos_current(id),pos_next);
