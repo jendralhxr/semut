@@ -40,8 +40,7 @@ end
 mu(:,1)=0
 
 customer_count= 25;
-
-payload_max= 400;
+payload_max= 358;
 vehicle_count= 3;
 fuel_price= 6500;
 fuel_ratio= 4.35;
@@ -98,17 +97,17 @@ for id= 1:vehicle_count do
     cost(id)= distance_total(id)/fuel_ratio*fuel_price;
     mprintf('nn id=%d dist=%f cost=%f\n',id,distance_total(id),cost(id));
 end
-mprintf('nn total jarak %f\n',sum(distance_total));
-
-l_nn = sum(distance_total);
+distance_nn=sum(distance_total);
+mprintf('nn total jarak, %f biaya Rp %f\n',distance_nn,distance_nn/fuel_ratio*fuel_price);
+l_nn = distance_nn;
 
 // ACO goes here henceforth
-c_alpha= 0.3;
-c_beta= 2; 
+c_alpha= 0.2;
+c_beta= 1.8; 
 c_rho= 0.1;
-c_q0= 0.5;
+c_q0= 0.6;
 l_gb= %inf;
-ant_max= 100;
+ant_max= 600;
 tau=0;
 
 // aco inits (pheromone, mu)
@@ -188,14 +187,18 @@ for ant= 1:ant_max do
         
         if payload<demand(pos_next) then
             tau(pos_current,1)= (1-c_rho)*tau(pos_current,1)+c_rho*tau_0;
+            tau(1,pos_current)= tau(pos_current,1);
             trail(pos_current,1)= 1;
+            trail(1,pos_current)= 1;
             l_temp= l_temp+distance(pos_current,1);
             payload= payload_max;
             pos_current= 1;
         end
         
         tau(pos_current,pos_next)= (1-c_rho)*tau(pos_current,pos_next)+c_rho*tau_0;
+        tau(pos_current,pos_next)= tau(pos_next,pos_current);
         trail(pos_current,pos_next)= 1;
+        trail(pos_next,pos_current)= 1;
         payload= payload-demand(pos_next);
         l_temp= l_temp+distance(pos_current,pos_next);
         pos_current= pos_next;
@@ -234,7 +237,7 @@ route_aco(1:vehicle_count,1)= 1;
 visited(1:26)=0;
 visited(1)=1;
 
-mprintf("--0\n");
+//mprintf("--0\n");
 // nearest neighbor on pheromone
 tau(:,1)= 0;
 while unvisited > 0 do
@@ -262,7 +265,7 @@ while unvisited > 0 do
     end
 end
 
-mprintf("--a\n");
+//mprintf("--a\n");
 // back home
 for id= 1:vehicle_count do
     if route_aco(id,step(id))~=1 then
@@ -272,7 +275,7 @@ for id= 1:vehicle_count do
     end
 end
 
-mprintf("--b\n");
+//mprintf("--b\n");
 // cost and total distance traveled for each vehicle
 cost(1:vehicle_count)= 0;
 distance_total(1:vehicle_count)=0;
@@ -283,4 +286,9 @@ for id= 1:vehicle_count do
     cost(id)= distance_total(id)/fuel_ratio*fuel_price;
     mprintf('aco id=%d dist=%f cost=%f\n',id,distance_total(id),cost(id));
 end
-mprintf('aco total jarak %f\n',sum(distance_total));
+distance_aco=sum(distance_total);
+mprintf('aco total jarak %f, biaya Rp %f\n',distance_aco,distance_aco/fuel_ratio*fuel_price);
+
+// for author's own good, don't mind these two lines
+route_aco(:,:)=route_aco(:,:)-1;
+route_nn(:,:)=route_nn(:,:)-1;
