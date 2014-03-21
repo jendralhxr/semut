@@ -196,7 +196,7 @@ for ant= 1:ant_max do
         end
         
         tau(pos_current,pos_next)= (1-c_rho)*tau(pos_current,pos_next)+c_rho*tau_0;
-        tau(pos_current,pos_next)= tau(pos_next,pos_current);
+        tau(pos_next,pos_current)= tau(pos_current,pos_next);
         trail(pos_current,pos_next)= 1;
         trail(pos_next,pos_current)= 1;
         payload= payload-demand(pos_next);
