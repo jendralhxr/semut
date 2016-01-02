@@ -1,4 +1,4 @@
 semut.sce
 
-Ant-colony-optimation-flavored nearest-neighbor search for finding shortest route to vehicle routing problem.
+Nearest-neighbor search with ant-colony optimization sprinkled on top to find shortest route to vehicle routing problem.
 
